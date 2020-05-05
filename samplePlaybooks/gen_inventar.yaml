@@ -1,0 +1,27 @@
+---
+    - name: "Demonstrate connecting to switches"
+      hosts: switches
+      connection: network_cli
+    
+      tasks:
+      - name: Gather only the config and default facts
+        register: out_facts
+        ios_facts:
+          gather_subset: all
+    
+    #  - debug: var=out_facts
+    
+      - debug:
+          msg:
+            - " OS Version  is {{ ansible_net_image }} "
+            - " OS Version  is {{ ansible_net_version }} "
+    
+      - name: 'Output to json'
+        local_action:
+          module: lineinfile
+          dest: output.json
+          line: '{{ inventory_hostname }} : {{ ansible_net_version }}'
+          create: yes
+    
+    
+    ...

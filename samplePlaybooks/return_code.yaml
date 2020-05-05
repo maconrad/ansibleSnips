@@ -1,0 +1,9 @@
+---
+    - hosts: somehost
+      tasks:
+        - name: grab ps aux
+          command: /bin/ps -aux
+          register: result
+    
+        - debug:
+            var: result.rc

@@ -1,0 +1,16 @@
+---
+    # Example locally
+    - hosts: localhost
+      gather_facts: no
+      tasks:
+        # Example of some string
+        - shell: echo 'vault-option name="KEYSTORE_PASSWORD" value="MASK-pw1234"'
+          register: results
+        - set_fact:
+            # Extract Regex Group 1 from regex_search
+            myvalue: "{{ results.stdout | regex_search(regexp,'\\1') }}"
+          vars:
+            # Search for value="" and set it to Group 1
+            regexp: 'value=\"([^"]+)'
+        - debug:
+            var: myvalue

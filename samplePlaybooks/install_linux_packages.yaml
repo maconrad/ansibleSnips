@@ -1,0 +1,23 @@
+---
+    - name: Install Packages
+      hosts: all
+      tasks:
+        - name: Include variables
+          include_vars: packages.yml
+    
+        - name: install Ubuntu Packages
+          package:
+            name: "{{ item }}"
+            state: latest
+          register: result
+          with_items:
+            - "{{ packages_ubuntu }}"
+          when: ansible_distribution  == "Ubuntu"
+    
+        - name: Install Docker python module
+          pip:
+            name: docker
+    
+        - name: Debug
+          debug:
+            var: result

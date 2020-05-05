@@ -1,0 +1,7 @@
+---
+    global:
+      hostname: "{{ inventory_hostname }}"
+      syslog:
+        - 192.168.1.1
+        - 192.168.1.2
+      other_unused_var: "abc"

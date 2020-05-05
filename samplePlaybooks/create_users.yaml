@@ -1,0 +1,11 @@
+---
+    - name: Create users
+      hosts: all
+      tasks: 
+        - user:
+            name: "{{ item.name }}"
+            state: absent
+            groups: "{{ item.groups }}"
+          with_items:
+            - { name: 'ansible', groups: 'wheel' }
+            - { name: 'backdoor', groups: 'root' }

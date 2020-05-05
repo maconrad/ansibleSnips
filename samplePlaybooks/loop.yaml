@@ -1,0 +1,10 @@
+---
+    - hosts: all
+      tasks:
+        - name: install packets
+          apt: 
+            name: "{{ item }}"
+            state: latest
+          with_items:
+            - nmap
+            - net-tools

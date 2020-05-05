@@ -1,0 +1,28 @@
+- hosts: all
+  tasks:
+    - name: check mariadb status 
+      command: /bin/systemctl is-active mariadb
+      ignore_errors: yes # continue running, even if mariadb is not running, because this playbook
+                         # is going to act upon the result of this command. It might do something
+                         # even if mariadb currently is NOT active
+                         # To do this, the result of this command is stored in the result.rc variable
+                         # in the next line, and the result.rc is referred to in then when statement
+                         # below
+      register: result # This saves information about the result in the result var
+
+    - name: install http if mariadb is active
+      apt:
+        name: httpd
+        state: latest
+      when: result.rc == 0 # evaluate and only install if exit code
+                           # of systemctl command was 0
+                           # notice: identation level of when
+
+    - name: start http
+      service:
+        name: httpd
+        state: started
+
+    - name: Debug output
+      debug:
+        var: result.rc 

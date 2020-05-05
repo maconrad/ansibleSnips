@@ -1,0 +1,9 @@
+---
+    - hosts: all
+      tasks:
+        - name: install package if sufficient disk space 
+          apt:
+            name: mariadb-server
+            state: latest
+          with_items: "{{ ansible_mounts }}"
+          when: item.mount == "/" and item.size_available > 200000000000

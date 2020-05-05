@@ -1,0 +1,10 @@
+---
+    - name: "Demonstrate connecting to switches"
+      hosts: leafs
+      connection: network_cli
+    
+      tasks:
+        - name: Manage LLDP configuration on Cisco NXOS network devices.
+          nxos_lldp:
+            state: present
+    ...

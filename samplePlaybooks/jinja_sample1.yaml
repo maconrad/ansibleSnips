@@ -1,0 +1,8 @@
+- name: "Demonstrate connecting to switches with Jina2"
+  hosts: leafs
+  connection: network_cli
+
+  tasks:
+  - name: template AND push device configurations
+    nxos_config:
+      src: network_config.j2

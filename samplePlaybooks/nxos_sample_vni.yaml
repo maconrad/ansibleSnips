@@ -1,0 +1,124 @@
+---
+    - name: "VLAN VNI VTEP Provisioning"
+      hosts: leafs
+      connection: network_cli
+      vars:
+        vlans:
+            #With SVI, uncomment stuff below
+            # TODO: Could be done via variable
+            #       and control flow
+          - vlan_name: Vlan2100
+            vlan_desc: SOME_SERVER
+            vlan_id: 2100
+            vni: 102100
+            rt_imp: "65000:102100"
+            rt_exp: "65000:102100"
+            svi_ip: 10.100.100.1/24
+            mcast_group: 239.0.10.1
+           
+            #Without SVI
+          - vlan_name: Vlan232
+            vlan_desc: SOME_NOT_ROUTED
+            vlan_id: 232
+            vni: 100232
+            rt_imp: "65000:100232"
+            rt_exp: "65000:100232"
+            mcast_group: 239.0.10.1
+          
+      
+      tasks:
+        - name: Creating VLAN 
+          nxos_vlan:
+            vlan_id: "{{ item.vlan_id }}"
+            admin_state: up
+            name: "{{ item.vlan_desc }}" 
+            mapped_vni: "{{ item.vni }}"
+          with_items: "{{ vlans }}"
+          register: out
+    
+        - debug: 
+            msg: Stdout "{{ out }}" 
+            
+    
+        - name: vni configuration VLAN
+          nxos_evpn_vni:
+            vni: "{{ item.vni }}"
+            route_distinguisher: auto
+            route_target_import:
+              - auto
+              - "{{ item.rt_imp }}"
+            route_target_export: 
+              - auto
+              - "{{ item.rt_exp }}"
+          with_items: "{{ vlans }}"
+          register: out
+    
+        - debug: 
+            msg: Stdout "{{ out }}" 
+            
+    
+    #    - name: Add VLAN VPC
+    #      nxos_l2_interface:
+    #        name: Po8
+    #        mode: trunk
+    #        trunk_add_vlans: "{{ item.vlan_id }}"
+    #      with_items: "{{ vlans }}"
+    #      register: out
+    
+    #    - debug: 
+    #        msg: Stdout "{{ out }}" 
+            
+    
+    
+        - name: Add VNI to VTEP
+          nxos_vxlan_vtep_vni:
+            interface: nve1
+            vni: "{{ item.vni }}"
+            multicast_group: "{{ item.mcast_group }}"
+          with_items: "{{ vlans }}"
+          register: out
+    
+        - debug: 
+            msg: Stdout "{{ out }}" 
+        
+    #    - name: Add SVI  
+    #      nxos_interface:
+    #        name: "{{ item.vlan_name }}"
+    #      with_items: "{{ vlans }}"
+    #      register: out
+        
+    #    - debug:
+    #        msg: Stdout "{{ out }}"
+            
+    #    - name: Set VRF for SVI
+    #      nxos_vrf_interface:
+    #        vrf: AZ
+    #        interface: "{{ item.vlan_name }}"
+    #      with_items: "{{ vlans }}"
+    #      register: out
+    
+    #    - debug:
+    #        msg: Stdout "{{ out }}"
+        
+        #Fabric Fwd cleared when setting VRF, needs to be defined afterwards
+    #    - name: Add SVI in Fabric Forwarding Mode 
+    #      nxos_interface:
+    #        name: "{{ item.vlan_name }}"
+    #        fabric_forwarding_anycast_gateway: yes
+    #        admin_state: down
+    #        mtu: 9000
+    #      with_items: "{{ vlans }}"
+    #      register: out
+    
+    #    - debug:
+    #        msg: Stdout "{{ out }}"
+    
+    #    - name: Set interface IPv4 address
+    #      nxos_l3_interface:
+    #        name: "{{ item.vlan_name }}"
+    #        ipv4: "{{ item.svi_ip }}"
+    #      with_items: "{{ vlans }}"
+    #      register: out
+    
+    #    - debug:
+    #        msg: Stdout "{{ out }}"

@@ -6,6 +6,14 @@ Playbooks
 * install_linux_packages: Shows package manager and pip usage
 * regex_create_new_fact: Shows how to extract Data from output and create a new fact based on it
 * return_code: shows how to use the return code of some shell command
+* loop: Basic loop example that installs some packages
+* condition_sample1: Simple when condition
+* condition_sample2: When condition with register and ignore errors
+* jinja_sample1: Simple Syslog Server deployment
+* nxos_sample_lldp: LLDP Deployment 
+* nxos_sample_vpc: Host VPC Deployment
+* nxos_sample_vni: L2/L3 VNI Creation (including VTEP etc.)
 
 ## Folder: SamplePlaybooks (Variables)
-* Packages.yaml: Simple Variable File in Yaml Style
+* Packages_vars: Simple Variable File in (YAML Style)
+* syslog_vars: Variable definition for syslog Cfg (YAML Style)

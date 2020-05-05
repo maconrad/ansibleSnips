@@ -1,0 +1,59 @@
+---
+    - name: "Host-VPC mode Access"
+      hosts: all
+      connection: network_cli
+      vars:
+        fex_num: 1
+        interface_num: 20
+        hostname: Testhost1 
+        access_vlan: 50
+        po_num: "1{{ fex_num }}{{ interface_num }}"
+        eth_name: Ethernet10{{ fex_num }}/1/{{ interface_num }}
+    
+      tasks:
+        - name: Ensure {{ eth_name }} is a Layer 2 port and set description
+          nxos_interface:
+            name: "{{ eth_name }}"
+            admin_state: up
+            description: '*** {{ hostname }} ***'
+            mode: layer2
+        
+        - name: Create Port-Channel Interface {{ po_num }}
+          nxos_linkagg:
+            group: "{{ po_num }}"
+            state: present
+            mode: active
+            force: true
+            members:
+              - "{{ eth_name }}"
+    
+        - name: Ensure Port-Channel{{ po_num }} is a Layer 2 port and set description
+          nxos_interface:
+            name: Port-Channel{{ po_num }}
+            description: '*** VPC to: {{ hostname }} ***'
+            mode: layer2
+        
+        - name: STP Config for Port-Channel
+          nxos_config:
+            lines:
+              - spanning-tree port type edge
+              - no shutdown
+            parents: interface Po{{ po_num }}
+            replace: block
+            match: none
+    
+    
+        - name: Configure Port-Channel L2 interface access VLAN to {{ access_vlan }}
+          nxos_l2_interface:
+            name: port-channel{{ po_num }}
+            mode: access
+            access_vlan: "{{ access_vlan }}"
+        
+        
+        - name: Configure VPC{{ po_num }} on Portchannel{{ po_num }} interface 
+          nxos_vpc_interface:
+            portchannel: "{{ po_num }}"
+            vpc: "{{ po_num }}"
+    
+            
+    ...

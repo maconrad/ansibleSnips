@@ -14,3 +14,29 @@
             regexp: 'value=\"([^"]+)'
         - debug:
             var: myvalue
+
+---
+    - hosts: localhost
+        gather_facts: no
+        tasks:
+        - shell: > 
+                echo 'ISE PROCESS NAME                       STATE            PROCESS ID'
+                echo '--------------------------------------------------------------------'
+                echo 'Database Listener                      running          3790        '
+                echo 'Database Server                        running          91 PROCESSES'
+            register: results
+            until: results.stdout.find("running") == -1
+            retries: 5
+            delay: 2
+            ignore_errors: yes
+        - debug:
+            var: results
+        - set_fact:
+            run_state: "{{ results.stdout | regex_search(regexp,'\\1') }}"
+            num_procs: "{{ results.stdout | regex_search(regexp2, '\\1') }}"
+            vars:
+            regexp: '(running)'
+            regexp2: '(\d+) PROCESSES'
+        - debug:
+            #var: myvalue
+            msg: "Still seeing {{ num_procs }} processes in the state of {{ run_state }}"

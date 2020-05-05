@@ -6,7 +6,7 @@ Basics
 * Task: single action
 * Play: Set of tasks to host or host group
 * Playbook: YAML File with one or more plays
-* Role: A pre-built set of playbooks designed to perform some standard configuration in a repeatable fashion. A play could leverage a role rather than tasks. 
+* Role: A pre-built set of playbooks designed to perform some standard configuration in a repeatable fashion. A play could leverage a role rather than tasks. All playbooks from role will be executed against a host.
 
 ## Setup and Authentication
 * /etc/ansible/ansible.cfg
@@ -60,7 +60,7 @@ Basics
 * Variables referenced with {{name}}
 * vars_files to include variable files in playbook
 * --extra-vars or -e for Command Line
-* group_vars/all | group_vars/groupname
+* group_vars/all | group_vars/all.yaml | group_vars/groupname
 * host_vars host_vars/xyz.boston.example.com
   
 ```bash  
@@ -84,6 +84,36 @@ Basics
   ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
 ```  
 
+## Loops
+* With_items / with_dict (deprecated) -> loop
+* Loop + flatten filter
+* Until / Retries / Delay Statements
+
+
+```bash  
+    - name: with_items
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{ items }}"
+
+    - name: with_items -> loop
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ items|flatten(levels=1) }}"
+```
+
+## Roles
+* Search Role via Galaxy: ansible-galaxy search nginx
+* Install with: ansible-galaxy install --roles-path . geerlingguy.nginx
+* Example:
+
+```bash  
+  - hosts: servers
+    roles:
+      - { role: geerlingguy.nginx }
+```
+
 ## Links
 * See [CL2019](https://www.cisco.com/c/dam/m/sr_rs/events/2019/cisco-connect/pdf/using_ansible_in_dc_automation_radenko_citakovic.pdf)
 * See [Ansible Documentation Variables](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html)
+* See [Ansible Documentation Roles](https://docs.ansible.com/ansible/latest/galaxy/user_guide.html#installing-roles)

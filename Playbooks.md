@@ -13,6 +13,8 @@ Playbooks
 * nxos_sample_lldp: LLDP Deployment 
 * nxos_sample_vpc: Host VPC Deployment
 * nxos_sample_vni: L2/L3 VNI Creation (including VTEP etc.)
+* nxos_sample_bgp: BGP Config (including ansible tags)
+* netconf_sample: Add Smart Licensing (Netconf Config & Netconf RPCs)
 
 ## Folder: SamplePlaybooks (Variables)
 * Packages_vars: Simple Variable File in (YAML Style)

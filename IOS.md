@@ -19,3 +19,9 @@ IOS
 * ansible_net_interfaces: All Interfaces (Type, MTU, MAC, Duplex, IP)
 * ansible_net_stacked_serialnums: SN if stacked
 * ansible_net_memfree_mb: Free memory
+
+## See
+* Network best practices [Ansible](https://docs.ansible.com/ansible/latest/network/user_guide/network_best_practices_2.5.html)
+* DEVNET1002 Roles, Netconf, IOS[Github](https://github.com/kuhlskev/devnet1002)
+* DEVNET1002 [CLEUR](https://www.ciscolive.com/c/dam/r/ciscolive/emea/docs/2019/pdf/DEVWKS-1002.pdf
+)

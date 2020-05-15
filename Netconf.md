@@ -62,3 +62,6 @@ restconf ipv4 access-list name ipv6-acl1_permit
 * XPath in Netconf / YANG [Tail-f](https://info.tail-f.com/xpath-netconf-yang)
 * Candidate Data Store [CiscoCfgGuide](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/prog/configuration/169/b_169_programmability_cg/configuring_yang_datamodel.html)
 * Netconf and Restconf ACLs [ACLs](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/prog/configuration/1612/b_1612_programmability_cg/netconf_and_restconf_service_level_acls.html)
+* Ansible Netconf [Module](https://docs.ansible.com/ansible/latest/plugins/connection/netconf.html)
+* Neconf Role Example [Github](https://github.com/ansible/ansible/issues/36786)
+* Netconf device_params mapping [Issue](https://github.com/ansible/ansible/issues/36786)

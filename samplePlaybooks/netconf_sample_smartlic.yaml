@@ -1,0 +1,112 @@
+---
+    - name: Baseline
+      connection: netconf
+      hosts: switch
+      gather_facts: no
+      tasks:
+    
+    #    - name: Getting Current Config
+    #      netconf_rpc:
+    #        rpc: get
+    #        content: |
+    #          <filter type="subtree"> 
+    #            <if:interfaces xmlns:if="urn:ietf:params:xml:ns:yang:ietf-interfaces" />
+    #          </filter>
+    #        display: json
+        
+        - name: Discard any open other changes before Locking
+          netconf_rpc:
+            rpc: discard-changes
+    
+        - name: Locking Candidate Datastore
+          netconf_rpc:
+            rpc: lock
+            content:
+              target:
+                candidate:
+        
+        - name: Remove Default CiscoTAC-1 Profile
+          netconf_rpc:
+            rpc: edit-config
+            content: |
+              <target>
+                <candidate/>
+              </target>
+              <config>
+                <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+                 <call-home>
+                  <profile xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+                   <profile-name>CiscoTAC-1</profile-name>
+                   <active>false</active>
+                  </profile>
+                 </call-home>
+                </native>
+              </config>
+    
+        - name: Add our own Smart License Server to config
+          netconf_rpc:
+            rpc: edit-config
+            content: |
+              <target>
+                <candidate/>
+              </target>
+              <config>
+                <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+                 <call-home>
+                   <contact-email-addr xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">sch-smart-licensing@cisco.com</contact-email-addr>
+                    <http xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+                     <secure>
+                      <server-identity-check>true</server-identity-check>
+                     </secure>
+                    </http>
+                   <profile xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+                    <profile-name>smartlicense</profile-name>
+                    <active>true</active>
+                    <reporting>
+                      <user-sl-data>true</user-sl-data>
+                    </reporting>
+                    <destination>
+                      <transport-method>http</transport-method>
+                      <address>
+                        <http>https://{{var_smartlic_hostname}}/Transportgateway/services/DeviceRequestHandler</http>
+                      </address>
+                    </destination>
+                   </profile>
+                  </call-home>
+                  <ip>
+                   <host>
+                     <host-list>
+                      <name>{{var_smartlic_hostname}}</name>
+                      <ip-list>{{var_ip_smartlic_srv}}</ip-list>
+                     </host-list>
+                    </host>
+                  </ip>         
+                </native>
+              </config>
+        
+        - name: commiting Changes
+          netconf_rpc:
+            rpc: commit
+    
+        - name: Unlocking Datastore
+          netconf_rpc:
+            rpc: unlock
+            content:
+              target:
+                candidate:
+        
+        - name: Register to SmartLic Server
+          netconf_rpc:
+            xmlns: "http://cisco.com/ns/yang/cisco-smart-license"
+            rpc: register-id-token
+            content: |
+              <id-token>
+              {{var_token}}
+              </id-token>
+    #        register: var_smartlic
+    
+    #    - name: Debug SmartLic Registration
+    #      debug: var=var_smartlic
+    
+    
+    

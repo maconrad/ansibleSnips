@@ -1,0 +1,43 @@
+---
+# See: https://fchaudhr.github.io/LTRDCN_1572/task4-vxlan-nxos/
+# tasks file for leaf
+#task to configure bgp neighbor to all spine switches
+- name: Enable BGP
+  nxos_feature:
+    feature: bgp
+    provider: "{{nxos_provider}}"
+    state: enabled
+  tags: bgp
+- name: Configure BGP AS
+  nxos_bgp:
+    asn: "{{ asn }}"
+    router_id: "{{ router_id }}"
+    provider: "{{ nxos_provider }}"
+    state: present
+  tags: bgp
+- name: Configure BGP AF
+  nxos_bgp_af:
+    asn: "{{ asn }}"
+    afi: ipv4
+    safi: unicast
+    provider: "{{ nxos_provider }}"
+  tags: bgp
+- name: Configure iBGP neighbors
+  nxos_bgp_neighbor:
+    asn: "{{ asn }}"
+    neighbor: "{{ item.neighbor }}"
+    remote_as: "{{ item.remote_as }}"
+    update_source: "{{ item.update_source }}"
+    provider: "{{ nxos_provider }}"
+  with_items: "{{ bgp_neighbors }}"
+  tags: bgp
+- name: Configure iBGP neighbor AF
+  nxos_bgp_neighbor_af:
+    asn: "{{ asn }}"
+    neighbor: "{{ item.neighbor }}"
+    afi: ipv4
+    safi: unicast
+    send_community: both
+    provider: "{{ nxos_provider }}"
+  with_items: "{{ bgp_neighbors }}" 
+  tags: bgp

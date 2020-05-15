@@ -38,11 +38,38 @@ Basics
 * ansible-playbook: Playbook
   * ansible-playbook --syntax-check xy.yaml
   * ansible-playbook -i inventory xy.yml -vvvv
+* ansible-playbook nxos_fabric.yml --tags "bgp"
+  * See samplePlaybooks: nxos_sample_bgp for settings Tags
 * ansible-vault: Sensitive Data encrypt into YAML File
 * ansible-pull: Lets client pull
 * ansible-docs: Docstring parsing of ansible module -> see example
   * ansible-doc debug
 * ansible-galaxy: Role download from community
+
+## Vars
+* Ini-style (=) or YAML Style
+* YAML Style preferred for vars (dict)
+  * Example: 
+    * "{{ varname }}" For accessing vars
+    * bgp_neighbors uses YAML List (-) + dict {} do define subvars
+      * access for example with "{{ item.neighbor }}" in with_items loop
+
+```bash
+---
+  # vars file for leaf
+  nxos_provider:
+    username: "{{ user }}"
+    password: "{{ pwd }}"
+    transport: nxapi
+    timeout: 30
+    host: "{{ inventory_hostname }}"
+
+  asn: 65000
+
+  bgp_neighbors:
+  - { remote_as: 65000, neighbor: 192.168.0.6, update_source: Loopback0 }
+  - { remote_as: 65000, neighbor: 192.168.0.7, update_source: Loopback0 }
+```
 
 
 ## Ad-hoc Commands
@@ -53,6 +80,45 @@ Basics
 ```bash
     ansible -m setup -u root servers
 ```
+
+## Comments, Conditionals, Filters, Tags
+* Comment
+
+```bash
+    # Single Line
+    {#
+      Multi Line
+    #}
+```
+
+* When
+  
+```bash
+    ...
+    when: ansible_host == "1.1.1.1"
+```
+
+* Filters
+  
+```bash
+    ...
+    {{ myvar | ipaddr }}
+```
+
+* Tags
+  * Only run tasks with a certain tag
+  * ansible-playbook playbook.yml --tags "feature"
+  
+```bash
+    ...
+    - name: Enable BGP
+      nxos_feature:
+        feature: bgp
+        provider: "{{nxos_provider}}"
+        state: enabled
+      tags: feature
+```
+
 
 ## Playbook Commands
 * register & debug (Single line or with msg) -> Example:
@@ -113,7 +179,61 @@ Basics
       - { role: geerlingguy.nginx }
 ```
 
+* Create Own Roles
+  * Create own role with ansible-galaxy init 
+  * Creates default folder structure with templates (j2), vars, tasks, etc.
+    * Example: ansible-galaxy init myrole
+  * Structure:
+
+```bash  
+.
+├── playbook.yml
+├── inventory
+├── roles
+|   ├── rolename
+|       └── tasks
+|           └── main.yml
+|       └── templates
+|           └── sometempl.j2
+|       └── vars
+|           └── main.yml
+
+```
+
+## Vaults
+* Sensitive Data encyption (Passwords/Keys)
+  * File or single variable
+* ansible-vault encrypt|decrypt|view
+
+```bash
+  ---
+    username: "admin"
+    password: "supersecret"
+  ...
+
+  ansible-vault encrypt secretfile.yml
+  ansible-vault encrypt_string "supersecret" --name "var_name_eg_password"
+```
+
+## Callbacks
+* Modify default output behaviour of Ansible
+
+
+```bash
+  cat > ansible.cfg << _EOF
+  [defaults]
+  inventory = hosts
+  host_key_checking = false
+  record_host_key = true
+  stdout_callback = debug
+
+_EOF
+```
+
 ## Links
+* See Tutorial [Slideshare](https://de.slideshare.net/apnic/network-automation-netdevops-with-ansible-89230669)
 * See [CL2019](https://www.cisco.com/c/dam/m/sr_rs/events/2019/cisco-connect/pdf/using_ansible_in_dc_automation_radenko_citakovic.pdf)
 * See [Ansible Documentation Variables](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html)
 * See [Ansible Documentation Roles](https://docs.ansible.com/ansible/latest/galaxy/user_guide.html#installing-roles)
+* See [VXLAN EVPN with Ansible CL](https://fchaudhr.github.io/LTRDCN_1572/)
+* See Callback Modules [List](https://docs.ansible.com/ansible/latest/plugins/callback.html)

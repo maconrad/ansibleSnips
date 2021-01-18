@@ -1,0 +1,43 @@
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+    <call-home>
+      <contact-email-addr xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">sch-smart-licensing@cisco.com</contact-email-addr>
+      <tac-profile xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+        <profile>
+          <CiscoTAC-1>
+            <active>false</active>
+            <destination>
+              <transport-method>http</transport-method>
+            </destination>
+          </CiscoTAC-1>
+        </profile>
+      </tac-profile>
+      <user-profile xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+        <profile>
+          <profile-name>{{ smart_license_server.name }}</profile-name>
+          <destination>
+            <transport-method>
+              <http/>
+              <email>false</email>
+            </transport-method>
+            <address>
+              <http>http://{{ smart_license_server.hostname }}/Transportgateway/services/DeviceRequestHandler</http>
+            </address>
+          </destination>
+        </profile>
+      </user-profile>
+    </call-home>
+    <ip>
+      <http xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-http">
+        <authentication>
+          <local/>
+        </authentication>
+        <server>true</server>
+        <secure-server>true</secure-server>
+        <client>
+          <source-interface>{{ http.client_source_interface }}</source-interface>
+        </client>
+      </http>
+    </ip>
+  </native>
+</config>

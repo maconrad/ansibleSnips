@@ -1,0 +1,6 @@
+---
+model: 9300
+smart_licensing:
+  mode: regular
+http:
+  client_source_interface: GigabitEthernet0/0/0

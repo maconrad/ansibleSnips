@@ -53,6 +53,18 @@ restconf ipv4 access-list name ipv6-acl1_permit
 ```
 ***
 
+## Ansible + Netconf + YAMG
+```bash
+
+pip install netconf-console 
+pip install ncc ncclient jxmlease lxml pyang
+ansible-galaxy collection install ansible.netcommon
+ansible-galaxy collection install community.yang
+
+# Optional
+ansible-galaxy collection install cisco.ios
+ansible-galaxy collection install ansible-network.cisco_ios
+```
 
 ## See
 * Ansible Network Automation [Intro](https://blogs.cisco.com/developer/automating-network-operations-part1)

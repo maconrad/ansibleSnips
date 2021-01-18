@@ -1,0 +1,7 @@
+---
+configs_dir: "./generated_configs"
+smart_license_server:
+  name: LOCAL-SSM
+  hostname: SSM-TEST1.testnet.local
+  ipv4_addr: 10.64.101.1
+  token: Y2VhODNlMWYt

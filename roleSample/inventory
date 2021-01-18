@@ -1,0 +1,8 @@
+[all:vars]
+ansible_user=admin
+ansible_ssh_pass=cisco12345
+ansible_connection=netconf
+ansible_python_interpreter=/home/conrad/virtualenvs/ansible/bin/python
+
+[access]
+ISR1100_TEST ansible_host=10.64.101.10 ansible_network_os=iosxr

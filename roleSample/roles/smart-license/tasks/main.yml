@@ -1,0 +1,43 @@
+- name: Ensures {{ configs_dir }}/{{ inventory_hostname }} exists
+  file:
+    path: "{{ configs_dir }}/{{ inventory_hostname }}"
+    state: directory
+
+- name: BUILD - Smart License config locally
+  template:
+    src: smart_license.j2
+    dest: "{{ configs_dir }}/{{ inventory_hostname }}/smart_license.xml"
+
+- name: EXECUTE - Configure Smart License via Netconfig
+  ansible.netcommon.netconf_config:
+     src: "{{ configs_dir }}/{{ inventory_hostname }}/smart_license.xml"
+
+- name: EXECUTE - Register to configured Smart License Server
+  ansible.netcommon.netconf_rpc:
+    xmlns: "http://cisco.com/ns/yang/cisco-smart-license"
+    rpc: register-id-token
+    content: |
+      <id-token>
+       "{{ smart_license_server.token }}"
+      </id-token>
+  when: "smart_licensing.mode | string == 'regular'"
+
+- name: MONITOR - Get Smart License Registration and Authorization Status
+  ansible.netcommon.netconf_get:
+    display: native
+    filter: (/licensing/state/state-info/registration | /licensing/state/state-info/authorization )
+  register: licstate
+  until: licstate.output.data.licensing.state['state-info'].registration['registration-state'] != "reg-state-not-registered"
+  retries: 5
+  delay: 5
+
+- name: FACTS - Save Smart License State
+  set_fact:
+    sm_regist_fact: "{{ licstate.output.data.licensing.state['state-info'].registration['registration-state'] }}"
+    sm_authz_fact: "{{ licstate.output.data.licensing.state['state-info'].authorization['authorization-state'] }}"
+
+- name: DEBUG - Print Smart License State
+  ansible.builtin.debug:
+    msg:
+    - "Registration State {{ sm_regist_fact }}"
+    - "Authorization State {{ sm_authz_fact }}"

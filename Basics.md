@@ -19,6 +19,10 @@ Basics
     ssh-keygen
     ssh-copy-id root@1.2.3.4
     ssh root@1.2.3.4
+    
+    #Add a host key so can run playbook on host (netconf & ssh)
+    ssh-keyscan -p 830 host.domain.local >> /home/user/.ssh/known_hosts 
+    ssh-keyscan host.domain.local >> /home/user/.ssh/known_hosts
 ```
 ***
 ## Inventory
@@ -183,6 +187,7 @@ Basics
   * Create own role with ansible-galaxy init 
   * Creates default folder structure with templates (j2), vars, tasks, etc.
     * Example: ansible-galaxy init myrole
+    * Example 2.10: ansible-galaxy role init test-role-1
   * Structure:
 
 ```bash  

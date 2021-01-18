@@ -1,0 +1,11 @@
+---
+# main playbook
+
+- name: ACCESS BASE CONFIG
+  hosts: access
+  gather_facts: no
+  vars:
+    switch_role: "access"
+  roles:
+    - name: smart-license
+      when: model | string in ['1100', '9300']

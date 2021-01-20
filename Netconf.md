@@ -50,6 +50,12 @@ ip access-list standard acl1_permit
 netconf-yang ssh ipv4 access-list name acl1_permit
 restconf ipv4 access-list name ipv6-acl1_permit
 
+# Add SSH Key if necessary
+ssh-keyscan -p 830 switch.tnet.local >> /home/<username>/.ssh/known_hosts 
+
+# Verify connectivity
+ssh -p 830 switch.tnet.local netconf
+
 ```
 ***
 

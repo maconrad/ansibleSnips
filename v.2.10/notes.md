@@ -1,7 +1,72 @@
 ## Differences
-* ansible-galaxy role init <name>
-* ansible-galaxy collection install ansible.netcommon
-* ansible-galaxy collection install community.yang
+* More stuff via Ansible Galaxy
+
+## Commands
+* Galaxy
+* NCC
+* Netconf-Console (no get-oper)
+* Pyang etc.
+
+| Galaxy Commands                                    | Description                    |
+|----------------------------------------------------|--------------------------------|
+|ansible-galaxy role init <name>                     | Create own Role                |
+|ansible-galaxy collection install ansible.netcommon | Native Netconf                 |
+|ansible-galaxy collection install community.yang    | YANG modules + Netconf         |
+
+| NCC,PYANG,json2xml,netconf-console Commands                                                | Description                    |
+|--------------------------------------------------------------------------------------------|--------------------------------|
+|ncc --host=1.1.1.1 --get-oper -x '/licensing' -u <user> -p <pw>                             | Create own Role                |
+|ncc... --get-oper -x '(/licensing/state/state-info/registration \| /licensing/state/state-info/authorization )'  | XPathA Or XPathB |
+|pyang -f tree --tree-depth=2 --tree-path=/licensing/config cisco-smart-license.yang         | Inspect (part of) YANG Model   |
+|pyang -f sample-xml-skeleton --sample-xml-skeleton-doctype=config cisco-smart-license.yang  | XML Skeleton of type config (or data) |
+|pyang -f sample-json-skeleton --plugindir .. cisco-smart-license.yang                       | JSON Skeleton                  |
+|pyang -f jtox --lax-quote-checks -o openconfig-vlan.jtox openconfig-vlan.yang               | Generate JTOX (JSON Schema)    |
+|json2xml -t config -o data.xml ietf-interfaces.jtox iface.json                              | Generate Data XML from JSON, JTOX + YANG |
+|netconf-console --host 1.1.1.1 --port 830 --user <user> --password <pw> --db running --get --xpath /native/call-home | Get Operation |
+|netconf-console  --host=example.com -i                                                      | Interactive shell |
+|... lock                                                                                    | Netconf lock a datastore       |
+|... edit-config fragment1.xml --db candidate                                                | Netconf edit config            |
+|... rpc commit-confirmed.xml                                                                | Netconf send a specific rpc    |
+|... unlock                                                                                  | Netconf unlock a datastore       |
+|... get-config                                                                              | Netconf Get-Config               |
+|... discard-changes                                                                         | Needs candidate Datastore enabled|
+
+Sample Config Snippet
+* Important: <config> Tag mus contain Namespace!!!! 
+* Otherwise error on cisco box about bad Element (config).
+
+```bash
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+    <call-home>
+      <contact-email-addr xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">sch-smart-licensing@cisco.com</contact-email-addr>
+      <tac-profile xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-call-home">
+        <profile>
+          <CiscoTAC-1>
+            <active>false</active>
+            <destination>
+              <transport-method>http</transport-method>
+            </destination>
+          </CiscoTAC-1>
+        </profile>
+      </tac-profile>
+    </call-home>
+  </native>
+</config>
+```
+Sample RPC Snippet
+* RPCs do not need config/data Tag or namespaces
+
+```bash
+- name: EXECUTE - Register to configured Smart License Server
+  ansible.netcommon.netconf_rpc:
+    xmlns: "http://cisco.com/ns/yang/cisco-smart-license"
+    rpc: register-id-token
+    content: |
+      <id-token>
+       "{{ smart_license_server.token }}"
+      </id-token>
+```
 
 ## Netconf Notes
 * Oper State via ncc, filtering via regular XPath
@@ -18,6 +83,7 @@
 * Debug
   * ansible-playbook -i inventory  main.yml -vvvv
   * ansible-playbook -i inventory --syntax-check main.yml
+  * ansible-playbook -i inventory play.yaml -e ansible_python_interpreter=python
   * source ~/virtualenvs/ansible/bin/activate
   * echo “set bell-style none” >> ~/.inputrc
   * echo “set background=dark” >> ~/.vimrc

@@ -13,6 +13,13 @@
 |ansible-galaxy collection install ansible.netcommon | Native Netconf                 |
 |ansible-galaxy collection install community.yang    | YANG modules + Netconf         |
 
+| Ansible Commands                                   | Description                    |
+|----------------------------------------------------|--------------------------------|
+|ansible-playbook -i inventory  main.yml -vvvv       | Debug Playbook                 |
+|ansible-playbook -i inventory --syntax-check main.yml | Syntax Check Playbook        |
+|
+
+
 | NCC,PYANG,json2xml,netconf-console Commands                                                | Description                    |
 |--------------------------------------------------------------------------------------------|--------------------------------|
 |ncc --host=1.1.1.1 --get-oper -x '/licensing' -u <user> -p <pw>                             | Create own Role                |

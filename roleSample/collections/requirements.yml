@@ -3,6 +3,15 @@ collections:
 # With just the collection name
 - my_namespace.my_collection
 
+# Z.B.
+---
+collections:
+  - cisco.aci
+  - community.general
+  - community.vmware
+  - ansible.posix
+  - ansible.netcommon
+
 # With the collection name, version, and source options
 - name: my_namespace.my_other_collection
   version: 'version range identifiers (default: ``*``)'

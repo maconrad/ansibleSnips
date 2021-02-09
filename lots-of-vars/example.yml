@@ -1,0 +1,39 @@
+---
+  - name: "Setup VAPICs"
+    hosts: localhost
+    gather_facts: False
+    connection: local
+    vars:
+      ##########################################################################
+      ############################### Tower VARS ###############################
+      ##########################################################################
+      VCENTER_PASSWORD: "{{ VCENTER_PASSWORD }}" # Tower Credentials
+      VCENTER_USER: "{{ VCENTER_USER }}" # Tower Credentials
+      VCENTER_HOST: "{{ VCENTER_HOST }}" # Tower Credentials
+      ACI_USER: "{{ ACI_USER }}" # Tower Credentials (Infoblox)
+      ##########################################################################
+      ############################### NCAE VARS ################################
+      ##########################################################################
+      DHP_ID: "{{ data.DHP_ID }}" # NCAE Extra Vars
+      APIC_IP: "{{ data.APIC.APIC_IP }}" # NCAE Extra Vars
+      APIC_FABRIC_NAME: "{{ data.APIC.APIC_FABRIC_NAME }}" # NCAE Extra Vars
+      APIC_INFRA_VLAN_ID: "{{ data.APIC.APIC_INFRA_VLAN_ID }}" # NCAE Extra Vars
+      APIC_TEP_ADDRESS_POOL: "{{ data.APIC.APIC_TEP_ADDRESS_POOL }}" # NCAE Extra Vars
+      APIC_NODES: "{{ data.APIC.APIC_NODES }}" # NCAE Extra Vars
+      OOB_GW: "{{ data.OOB.OOB_GW }}" # NCAE Extra Vars
+      OOB_MASK: "{{ data.OOB.OOB_MASK }}" # NCAE Extra Vars
+      HX_DATASTORE_NAME: '{{ data.HX.HX_DATASTORE_NAME }}' # NCAE Extra Vars
+      TRUNK_PORTGROUP: '{{ data.HX.TRUNK_PORTGROUP }}' # NCAE Extra Vars
+      OOB_PORTGROUP: '{{ data.HX.OOB_PORTGROUP }}' # NCAE Extra Vars
+      ##########################################################################
+      ############################# Hardcoded VARS #############################
+      ##########################################################################
+      VCENTER_DATACENTER: DHP # Hardcoded here!
+      # We skip the first node, as the first node is our physical APIC.... Hacky
+      VAPIC_NODES: '{{ APIC_NODES[1:] }}'
+      VAPIC_IMAGE: 'aci-apic-dk9.4.2.5l.ova'
+
+    tasks:
+      - include_role:
+          name: roles/aci
+          tasks_from: aciVapicSetup

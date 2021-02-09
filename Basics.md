@@ -28,12 +28,47 @@ Basics
     ssh-keyscan -p 830 host.domain.local >> /home/user/.ssh/known_hosts 
     ssh-keyscan host.domain.local >> /home/user/.ssh/known_hosts
 ```
+
+```ini
+[defaults] 
+inventory = ./inventory 
+remote_user = someuser 
+host_key_checking = False
+# ask_pass = false 
+
+[privilege_escalation] 
+# become = true
+# become_method = sudo 
+# become_user = root
+```
+
 ***
 ## Inventory
 * INI oder YAML Style
 * INI Groups are in <span style="color:green">[]</span>
 * See inventory.ini
 * See inventory.yaml
+
+```ini
+[servers1]
+demo1.example.com
+demo2.example.com
+
+[servers2]
+demo3.example.com
+demo4.example.com
+
+[servers3]
+demo5.example.com ansible_user=hans home=/home/joe
+
+[servers:children]
+servers1
+servers2
+
+[servers:vars]
+user=joe
+
+```
 
 ***
 
@@ -63,21 +98,33 @@ Basics
   * ansible all -m setup
 
 ## Connections
-* List all connections > ansible-doc -t connection -l
-* Details of a connection > ansible-doc -t connection network_clki
+* See [Collection Index](https://docs.ansible.com/ansible/latest/collections/)
+* List all connections > `ansible-doc -t connection -l`
+* Details of a connection > `ansible-doc -t connection network_cli`
 * Commonly used
-  * network_cli
+  * ansible.netcommon.network_cli
+  * ansible.netcommon.netconf
+  * ansible.netcommon.httpapi
   * local
   * winrm
   * paramiko_ssh
-  * ssh
-  * httpapi
+  * ssh (default)
 
 ```yaml
+---
+- name: configure the router
+  hosts: routers
+  gather_facts: no
   connection: ansible.netcommon.network_cli
   network_os: cisco.ios.ios
   become: yes
   become_method: enable
+  tasks:
+    - name: set the motd banner
+      ios_banner:
+        banner: motd
+        text: "Hello world!"
+
 ```
 
 ## Vars
@@ -114,14 +161,19 @@ Basics
 
 
 ```bash
-# playbook.yml
-# inventory
-## inventory
-## group_vars
-### servers.yml
-### routers.yml
-## vars
-### some_other_vars.yml
+playbook.yml
+ansible.cfg
+inventory
+├── group_vars
+│   ├── servers.yml
+│   └── routers.yml
+├── host_vars
+│   ├── db.yml
+│   └── rtr1.yml
+|── vars
+│   └── some_other_vars.yml
+└── inventory
+
 ```
 
 ```bash
@@ -580,3 +632,5 @@ _EOF
 * See [Ansible Documentation Roles](https://docs.ansible.com/ansible/latest/galaxy/user_guide.html#installing-roles)
 * See [VXLAN EVPN with Ansible CL](https://fchaudhr.github.io/LTRDCN_1572/)
 * See Callback Modules [List](https://docs.ansible.com/ansible/latest/plugins/callback.html)
+* See [Preceden Rules](https://docs.ansible.com/ansible/latest/reference_appendices/general_precedence.html#general-precedence-rules)
+* See [Understanding variable precedence](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#:~:text=In%20general%2C%20Ansible%20gives%20precedence,that%20variable%20in%20the%20namespace.)

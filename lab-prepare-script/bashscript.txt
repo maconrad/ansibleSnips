@@ -1,0 +1,66 @@
+#!/usr/bin/sh
+DIR="/home/netcloud/ansible-training"
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+printf '=%.0s' {1..100}
+printf '\n'
+printf '=%.0s' {1..27}
+printf ' Welcome to the Ansible Training by Netcloud '
+printf '=%.0s' {1..28}
+printf '\n'
+printf '=%.0s' {1..100}
+printf '\n'
+printf '\n'
+
+if [ ! -d "$DIR" ]; then
+  echo "Cloning project to ${DIR}..."
+  git clone https://git.netcloud.local/ansible/ansible-training.git $DIR
+else
+  echo "Updating the project"
+  cd $DIR
+  git pull https://git.netcloud.local/ansible/ansible-training.git
+fi
+
+lab_3_playbooks='two-tier-wordpress.yml'
+lab_4_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_5_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_6_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_7_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_8_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_9_playbooks='pod-router.yml two-tier-wordpress.yml'
+lab_99_playbooks='pod-router.yml two-tier-wordpress.yml'
+pb="lab_$1_playbooks"
+arr=(${!pb})
+
+case $1 in
+    1 )         printf "${GREEN}This is the first lab, just changing the directory \u2713${NC}\n"
+                printf "${GREEN}You can start coding now, have fun :)${NC}\n"
+                cd $DIR/*$1*
+                ;;
+    2|3|4|5|6|7|8|9|99 )  printf "${GREEN}Preparing Lab ${1}${NC}\n"
+                      printf "${GREEN}  \u2022 Changing directory \u2713${NC}\n"
+                      printf "${GREEN}  \u2022 Running the playbook to get you ready \u2713${NC}\n"
+                      printf "\n"
+                      cd $DIR/*$1*
+                      if [ $1 == 2 ]; then
+                        printf "${BLUE}As lab one was just ad-hoc commands, we don't need a playbook. Go ahead! :)\n${NC}"
+                      else
+                        if [ $1 == 3 ]; then
+                          printf "${BLUE}Installation the required Ansible Collections\n${NC}"
+                          ansible-galaxy collection install community.mysql
+                          ansible-galaxy collection install ansible.posix
+                        fi
+                        if [ $1 == 4 ]; then
+                          printf "${BLUE}Installation the required Ansible Collections\n${NC}"
+                          ansible-galaxy collection install cisco.ios
+                        fi
+                        printf "${BLUE}We run the playbook now, please be patient!\n${NC}"
+                        for each in ${arr[@]}
+                        do
+                          printf "${BLUE}Running Playbook: ${each} now!\n${NC}"
+                          ansible-playbook $each --vault-password-file ~/.vault_pass.txt
+                        done
+                      fi
+                      ;;
+    * )         printf "${GREEN}Please provide a lab number 'prepare-lab 1'${NC}\n"

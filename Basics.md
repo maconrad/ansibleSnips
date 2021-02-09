@@ -7,6 +7,10 @@ Basics
 * Play: Set of tasks to host or host group
 * Playbook: YAML File with one or more plays
 * Role: A pre-built set of playbooks designed to perform some standard configuration in a repeatable fashion. A play could leverage a role rather than tasks. All playbooks from role will be executed against a host.
+* FQCN: Fully Quallified Collection Name (e.g. ansible.builtin.template)
+* Connection Plugins
+  * Default: Ansible connects via SSH > Uploads Python Modules > Runs Module
+  * For non-linux based systems: Connection=IOS
 
 ## Setup and Authentication
 * /etc/ansible/ansible.cfg
@@ -38,7 +42,13 @@ Basics
   * ansible all -m ping -i inventory 
   * ansible all -m setup 
   * ansible all -m docker_container -a "name=mycontainer image=ghost ports=8001:2368"
+  * ansible ubuntu -m copy -a "src=/etc/hosts dest=/tmp/hosts"
+  * ansible ubuntu -m shell -a 'echo $TERM'
   * ansible -m setup all -a 'filter=ansible_distribution'
+  * ansible <host-pattern>|all -m <module> -a <module-args> -i <inventory>
+* Help (list collections & modules)
+  * ansible-doc -l | egrep aci
+  * ansible-doc aci_bd
 * ansible-playbook: Playbook
   * ansible-playbook --syntax-check xy.yaml
   * ansible-playbook -i inventory xy.yml -vvvv
@@ -49,6 +59,26 @@ Basics
 * ansible-docs: Docstring parsing of ansible module -> see example
   * ansible-doc debug
 * ansible-galaxy: Role download from community
+* Ansible Facts (facts von Host aufrufen)
+  * ansible all -m setup
+
+## Connections
+* List all connections > ansible-doc -t connection -l
+* Details of a connection > ansible-doc -t connection network_clki
+* Commonly used
+  * network_cli
+  * local
+  * winrm
+  * paramiko_ssh
+  * ssh
+  * httpapi
+
+```yaml
+  connection: ansible.netcommon.network_cli
+  network_os: cisco.ios.ios
+  become: yes
+  become_method: enable
+```
 
 ## Vars
 * Ini-style (=) or YAML Style
@@ -57,6 +87,42 @@ Basics
     * "{{ varname }}" For accessing vars
     * bgp_neighbors uses YAML List (-) + dict {} do define subvars
       * access for example with "{{ item.neighbor }}" in with_items loop
+* Definitionen
+  * keine - oder spaces, $, zahlen am Anfang
+* Global Scope 
+  * extra_vars > ansible-playbook main.yml -e "packages=apache"
+* Play Scope
+  * vars innerhalb von play
+  * vars_files referenced in playbook with vars_files: -vars/some_other_vars.yml
+* Host Scope
+  * Inventar variablen erfassen
+* Runtime creation
+  * register - Resultat des Tasks in einer Variable
+  * set_fact - Neue Variable mit beliebigem Inhalt
+    * run with -vvv to see output of task 
+* Special Vars
+  * ansible_version: Information zur genutzten Ansible Version
+  * group_names: Liste der Gruppen des aktuellen Hosts
+  * inventory_hostname: Inventar Hostname des aktuellen Hosts
+  * role_name: Name der ausgeführten Ansible Rolle
+  * ansible_facts: Facts des aktuellen Ansible Hosts
+  * ansible_become_user: Ansible Superuser auf Zielhost
+  * ansible_become_method: Methode, um Superuser zu werden (IOS: enable)
+  * ansible_connection: Connection Plugin 
+  * ansible_host: Alternative zu inventory_hostname
+  * ansible_user: Ansible Nutzer auf Zielhost
+
+
+```bash
+# playbook.yml
+# inventory
+## inventory
+## group_vars
+### servers.yml
+### routers.yml
+## vars
+### some_other_vars.yml
+```
 
 ```bash
 ---
@@ -73,6 +139,65 @@ Basics
   bgp_neighbors:
   - { remote_as: 65000, neighbor: 192.168.0.6, update_source: Loopback0 }
   - { remote_as: 65000, neighbor: 192.168.0.7, update_source: Loopback0 }
+```
+
+```yml
+# Basic Var usage
+---
+- name: configure basic router settings
+  hosts: routers
+  gather_facts: no
+  connection: local
+  vars:
+    company_name: XY Inc.
+  tasks:
+    - name: configure the motd banner
+      ios_banner:
+        banner: motd
+        text: "This Device is managed by {{ company_name }}."
+...
+
+# Usage of Vars Files
+- name: vars_files Block Example
+  hosts: all
+  vars_files: 
+    - vars/users.yml
+  tasks:
+    # <SNIP>
+
+
+```
+
+```yml
+- name: Install package and print result
+  hosts: all
+  tasks:
+    - name: Install the package
+      ansible.builtin.yum:
+        name: httpd
+        state: installed
+      register: install_result
+    - name: Display the result
+      ansible.builtin.debug:
+        msg: "{{ install_result }}"
+    - name: Register new variable
+      ansible.builtin.set_fact:
+        httpd_packet: "{{ install_result.results[0].split(' ')[0] }}"
+    - name: Display the httpd packet
+      ansible.builtin.debug:
+        msg: "{{ httpd_packet }}"
+
+```
+
+## Ansible Cfg
+* Config
+* See for Config ansible.cfg priority [Guide](https://docs.ansible.com/ansible/latest/reference_appendices/config.html)
+* Very Basic Example
+
+```ini
+[defaults]
+inventory = ./inventory
+host_key_checking = False
 ```
 
 
@@ -154,13 +279,98 @@ Basics
   ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
 ```  
 
-## Loops
+## Conditionals 
+
+### When
+* When (if) statements
+  * is
+  * is defined
+  * is undefined
+
+```yml
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Test MSG'
+      register: output
+
+    - debug:
+        msg: '{{ output }}'
+      when: output.failed == true
+...
+
+```
+
+### Loops
 * With_items / with_dict (deprecated) -> loop
 * Loop + flatten filter
 * Until / Retries / Delay Statements
+* Examples
+  * Loop via item var (default)
+  * Loop via user var (renamed item var via Loop control)
+  * When (if) statements
+    * is | is defined | is undefined
+
+```yaml
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Name: {{ item.name }} - Alter: {{ item.age }}'
+      loop:
+        - {'name': 'testuser1', 'age': 32}
+        - {'name': 'testuser2', 'age': 26}
+...
+
+# Loop Control steuert Variablename und Output
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Name: {{ user.name }} - Alter: {{ user.age }}'
+      loop:
+        - {'name': 'testuser1', 'age': 32}
+        - {'name': 'testuser2', 'age': 26}
+      loop_control:
+          loop_var: user
+          label: '{{ user.name }}'
+...
+
+# Combine loop and when with renamed loop var
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Name: {{ user.name }} - Alter: {{ user.age }}'
+      loop:
+        - {'name': 'testuser1', 'age': 32}
+        - {'name': 'testuser2', 'age': 26}
+      loop_control:
+          loop_var: user
+          label: '{{ user.name }}'
+      when: user.age >= 30
+...
+
+## Combine loop and when with renamed loop var
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Name: {{ user.name }} - Alter: {{ user.age }}'
+      loop:
+        - {'name': 'testuser1', 'age': 32, 'special': True}
+        - {'name': 'testuser2', 'age': 26}
+      loop_control:
+          loop_var: user
+          label: '{{ user.name }}'
+      when: user.special is defined
+...
 
 
-```bash  
+```
+
+```yml  
     - name: with_items
       debug:
         msg: "{{ item }}"
@@ -170,6 +380,82 @@ Basics
       debug:
         msg: "{{ item }}"
       loop: "{{ items|flatten(levels=1) }}"
+```
+
+## Error Handling
+* block, rescue, always = try/catch/finally
+* ignore_errors: yes > Kein Abbruch playbook
+* any_errors_fatal: true > All hosts marked as failed, default behaviour only the host where error occured
+* failed_when: false > Define failed condition
+* retries: If command needs to be run multiple times
+
+```yml
+# Define failed condition - string search
+- name: Fail task when the command error output prints FAILED
+  ansible.builtin.command: /usr/bin/example-command -x -y -z
+  register: command_result
+  failed_when: "'FAILED' in command_result.stderr"
+
+# Define failed condition - return code value
+- name: Fail task when both files are identical
+  ansible.builtin.raw: diff foo/file1 bar/file2
+  register: diff_cmd
+  failed_when: diff_cmd.rc == 0 or diff_cmd.rc >= 2
+
+```
+
+```yml
+# Failed when True => Always fails when return above true
+---
+- hosts: localhost
+  tasks:
+    - block:
+      - debug:
+          msg: 'Block'
+        failed_when: True
+
+      rescue:
+      - debug:
+          msg: 'Rescue'
+
+      always:
+      - debug:
+          msg: 'Always'
+...
+
+## Rescue block not executed because of ignore errors
+---
+- hosts: localhost
+  tasks:
+    - block:
+      - debug:
+          msg: 'Block'
+        failed_when: True
+        ignore_errors: True
+
+      rescue:
+      - debug:
+          msg: 'Rescue'
+
+      always:
+      - debug:
+          msg: 'Always'
+...
+
+
+```
+
+
+```yml
+  tasks:
+    - name: Gather nxos facts on the switches
+      nc_nxos_facts:
+        gather_subset: legacy
+      register: result
+      retries: 5
+      delay: 5
+      until: result is not failed
+
 ```
 
 ## Roles
@@ -205,10 +491,60 @@ Basics
 
 ```
 
+## Handlers
+* Helper Funktions, e.g. for restarting a service
+* Only get executed if task is CHANGED
+* Only executed once even if called multiple times
+* Always exectued at the end of playbook
+
+```yml
+tasks:
+  - name: template configuration file
+    template:
+      src: template.j2
+      dest: /etc/foo.conf
+    notify:
+       - restart apache
+handlers:
+    - name: restart apache
+      service:
+        name: apache
+        state: restarted
+
+# Single Execution even on multiple calls
+---
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'Output 1'
+      notify:
+        - Handler 1
+      changed_when: True
+
+    - debug:
+        msg: 'Output 2'
+      notify:
+        - Handler 1
+      changed_when: True
+
+  handlers:
+    - name: Handler 1
+      debug:
+        msg: 'Handler 1'
+...
+
+
+```
+
+
 ## Vaults
 * Sensitive Data encyption (Passwords/Keys)
   * File or single variable
-* ansible-vault encrypt|decrypt|view
+* ansible-vault encrypt|decrypt|view|edit|rekey
+* ansible-vault encrypt_string --stdin-name ansible_password
+  * asks for vault pw which needs to be supplied when calling playbook
+  * better than directly supplying
+* ansible-playbook pod-router.yml --ask-vault-pass
 
 ```bash
   ---
@@ -218,6 +554,8 @@ Basics
 
   ansible-vault encrypt secretfile.yml
   ansible-vault encrypt_string "supersecret" --name "var_name_eg_password"
+  ansible-vault encrypt_string --stdin-name ansible_password
+  ansible-playbook --vault-password-file=vault-pw-file.txt site.yml
 ```
 
 ## Callbacks

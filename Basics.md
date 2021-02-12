@@ -158,6 +158,7 @@ user=joe
   * ansible_connection: Connection Plugin 
   * ansible_host: Alternative zu inventory_hostname
   * ansible_user: Ansible Nutzer auf Zielhost
+  * ansible_python_interpreter: Differen vEnv
 
 
 ```bash
@@ -513,12 +514,37 @@ host_key_checking = False
 ## Roles
 * Search Role via Galaxy: ansible-galaxy search nginx
 * Install with: ansible-galaxy install --roles-path . geerlingguy.nginx
+  * ansible-galaxy collection install community.mysql
+* Create local role: `ansible-galaxy init --offline my_role`
+* Install roles from yml file `ansible-galaxy role install --role-file ./requirements.yml --roles-path ./roles`
+* Roles: simplify complex plays, self-containing, define variables & default values
+  * defaults: contain default values that should be overriden
+  * vars: contain vars that should not be modified
+  * meta: contain info like maintainer, version
+* Collections: Collection of roles, playbooks, modules & plugins (or parts of it)
+  * E.g. cisco.ios
+* See [Galaxy](https://galaxy.ansible.com/)
 * Example:
 
-```bash  
+```yml  
   - hosts: servers
     roles:
       - { role: geerlingguy.nginx }
+```
+
+```yml
+# my_role/task/main.yml
+# my_role/task/other.yml
+---
+- hosts: localhost
+  tasks:
+    - include_role:
+        name: my_role
+        tasks_from: other
+
+    - include_role:
+        name: my_role
+...
 ```
 
 * Create Own Roles
@@ -542,6 +568,29 @@ host_key_checking = False
 |           └── main.yml
 
 ```
+
+## Delegation
+* Normally task run on target host
+* Delegate_to > run this task on another host
+  * e.g. change server config
+  * Run certain script locally e.g. to trigger something not on the host (e.g. take out of monitoring, LB, do an API call)
+
+```yml
+tasks:
+  - name: take out of load balancer pool
+    command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
+    delegate_to: 127.0.0.1
+```
+
+## Optimization & Debug
+* Num Forks > ansible.cfg (on how many hosts parallel)
+* Run playbook end-to-end instead of task-by-task
+  * serial: 2 (run end-to-end for 2 hosts, then next two hosts)
+* -vvvv > Output more infos
+* --syntax-check > Syntax Check > ansible-playbook test.yml --syntax-check
+* --check > Dryrun
+* Use Debug Module
+
 
 ## Handlers
 * Helper Funktions, e.g. for restarting a service
@@ -610,6 +659,68 @@ handlers:
   ansible-playbook --vault-password-file=vault-pw-file.txt site.yml
 ```
 
+## Files
+* Erstellen/kopieren von Files
+* Anpassen von text in Files
+* Jinja2 für Templates
+* 
+
+```yml
+---
+- hosts: localhost
+  tasks:
+    - ansible.builtin.file:
+        path: new_folder
+        state: directory
+        mode: '0777'
+...
+
+---
+- hosts: localhost
+  tasks:
+    - ansible.builtin.copy:
+        src: input.txt
+        dest: new_folder/new_file.txt
+        mode: '0777'
+    - ansible.builtin.copy:
+        src: input2.txt
+        dest: new_folder/new_file.txt
+        backup: yes
+...
+
+```
+
+```yml
+# Ersetze eine Zeile die mit 1 endet durch Not Allowed
+---
+- hosts: localhost
+  tasks:
+    - ansible.builtin.lineinfile:
+        path: test.txt
+        regexp: '.*1$'
+        line: 'Not Allowed!'
+...
+
+```
+
+```yml
+---
+- hosts: localhost
+  vars:
+    company: Abc Inc
+  tasks:
+    - ansible.builtin.template:
+        src: template.j2
+        dest: output.txt  
+...
+
+# Template.j2
+Working for {{ company }}.
+On system: {{ ansible_hostname }}
+Current time: {{ ansible_date_time.date }}
+
+```
+
 ## Callbacks
 * Modify default output behaviour of Ansible
 
@@ -625,6 +736,81 @@ handlers:
 _EOF
 ```
 
+## Module defaults
+* Used when calling a module with the same argument frequently
+
+```yml
+- hosts: localhost
+  module_defaults:
+    uri:
+      force_basic_auth: true
+      user: some_user
+      password: some_password
+  tasks:
+    - uri:
+        url: http://some.api.host/v1/whatever1
+    - uri:
+        url: http://some.api.host/v1/whatever2
+    - uri:
+        url: http://some.api.host/v1/whatever3
+...
+```
+
+## YAML Anchors and Aliases
+* Used e.g. to share variables
+* An anchor is defined with & and refered with *
+* Here’s an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value
+* See [Documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_advanced_syntax.html#yaml-anchors-and-aliases-sharing-variable-values)
+
+```yml
+---
+...
+vars:
+    app1:
+        jvm: &jvm_opts
+            opts: '-Xms1G -Xmx2G'
+            port: 1000
+            path: /usr/lib/app1
+    app2:
+        jvm:
+            <<: *jvm_opts
+            path: /usr/lib/app2
+...
+
+# Example from Netapp
+---
+- hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+  vars_files: "{{ file }}"
+  vars:
+    login: &login
+      username: "{{ username }}"
+      password: "{{ password }}"
+      https: true
+      validate_certs: false
+  name: "Build cluster: {{ cluster }}"
+  tasks:
+  - name: create cluster
+    na_ontap_cluster:
+      state: present
+      cluster_name: "{{ cluster }}"
+      hostname: "{{ node1.dhcp_ip }}"
+      <<: *login
+  - name: "Join Node to {{ cluster }}"
+    na_ontap_cluster:
+        state: present
+        cluster_ip_address:  169.254.31.132
+        #cluster_name: "{{ cluster }}"
+        hostname: "{{ node1.dhcp_ip }}"
+        <<: *login
+(..)
+...
+```
+
+
+
 ## Links
 * See Tutorial [Slideshare](https://de.slideshare.net/apnic/network-automation-netdevops-with-ansible-89230669)
 * See [CL2019](https://www.cisco.com/c/dam/m/sr_rs/events/2019/cisco-connect/pdf/using_ansible_in_dc_automation_radenko_citakovic.pdf)
@@ -634,3 +820,10 @@ _EOF
 * See Callback Modules [List](https://docs.ansible.com/ansible/latest/plugins/callback.html)
 * See [Preceden Rules](https://docs.ansible.com/ansible/latest/reference_appendices/general_precedence.html#general-precedence-rules)
 * See [Understanding variable precedence](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#:~:text=In%20general%2C%20Ansible%20gives%20precedence,that%20variable%20in%20the%20namespace.)
+* See [JMES Language](https://jmespath.org/tutorial.html)
+* See [Ansible Logging](https://docs.ansible.com/ansible/latest/reference_appendices/logging.html)
+* See [Task Debugging](https://docs.ansible.com/ansible/latest/user_guide/playbooks_debugger.html)
+* See [Internal Doku](https://docs.netcloud.local/docs/rtd-doku/en/latest/ansible.html?highlight=ansible)
+* See [Internal Repo Demo Event](https://git.netcloud.local/strnad/ansible-demo-event)
+* See [Internal Repo PoD Setup](https://git.netcloud.local/ansible/ansible-training-pod-vmware)
+* See [Internal Tower](https://tower-01.netcloud.lab/)

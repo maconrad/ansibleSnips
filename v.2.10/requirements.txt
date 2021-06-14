@@ -20,7 +20,7 @@ idna==2.10
 Jinja2==2.11.2
 jsonschema==3.2.0
 jxmlease==1.0.3
-lxml==4.6.2
+lxml==4.6.3
 MarkupSafe==1.1.1
 ncc==0.3.0
 ncclient==0.6.7

@@ -36,7 +36,7 @@ pyparsing==2.4.7
 pyrsistent==0.17.3
 pyserial==3.5
 python-dotenv==0.15.0
-PyYAML==5.3.1
+PyYAML==5.4
 requests==2.25.1
 scp==0.13.3
 six==1.15.0
